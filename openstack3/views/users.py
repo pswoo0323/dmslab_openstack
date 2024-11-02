@@ -10,7 +10,7 @@ def openstack_connection():
 
     return conn
 
-class UserCreate(APIView):
+class UserRegister(APIView):
     def post(self, request):
         conn = openstack_connection()
         username = request.data.get('username')
@@ -62,7 +62,7 @@ class UserDelete(APIView):
             return Response({"error": str(e)},
                             status=status.HTTP_400_BAD_REQUEST)
 
-class AssignAdminRole(APIView):
+class AdminUser(APIView):
     def post(self, request):
         conn = openstack_connection()
         user_id = request.data.get('user_id')
