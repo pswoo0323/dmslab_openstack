@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from openstack import connection
-from openstack3.models import User
+from openstack3.domain.models import User
 from openstack3.serializer import UserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi

@@ -2,23 +2,51 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from openstack import connection
-from openstack3.models import User
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+import re
+from openstack3.serializer import ResourcesSerializer
 
 def openstack_connection():
     conn = connection.from_config(cloud_name='default')
 
     return conn
-
-#network, subnet 생성
 class CreateNetwork(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'network': openapi.Schema(type=openapi.TYPE_STRING, description='Network'),
+                'subnet': openapi.Schema(type=openapi.TYPE_STRING, description='Subnet'),
+                'CIDR': openapi.Schema(type=openapi.TYPE_STRING, description='CIDR (형식: x.x.x.x/x)'),
+                'gateway': openapi.Schema(type=openapi.TYPE_STRING, description='gateway_ip (형식: x.x.x.x)'),
+            },
+            required=['network', 'subnet', 'CIDR', 'gateway'],
+        ),
+        responses={
+            201: 'ResourcesSerializer',  # 성공 시 ResourcesSerializer 형식으로 응답
+            400: 'Bad Request',
+        }
+    )
     def post(self, request):
         conn = openstack_connection()
-        network_name = request.data.get('network_name')
-        subnet_name = request.data.get('subnet_name')
-        cidr = request.data.get('cidr')
+        network_name = request.data.get('network')
+        subnet_name = request.data.get('subnet')
+        gateway_ip = request.data.get('gateway')
+        cidr = request.data.get('CIDR')
 
-        if not network_name or not subnet_name or not cidr:
-            return Response({"error": "네트워크, 서브넷, CIDR입력을 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+        # CIDR 및 Gateway IP 형식 검증
+        cidr_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d{1,2}$"
+        ip_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
+
+        if not network_name or not subnet_name or not cidr or not gateway_ip:
+            return Response({"error": "네트워크, 서브넷, CIDR, Gateway 입력을 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not re.match(cidr_pattern, cidr):
+            return Response({"error": "CIDR 형식이 올바르지 않습니다. 형식: x.x.x.x/x"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not re.match(ip_pattern, gateway_ip):
+            return Response({"error": "Gateway IP 형식이 올바르지 않습니다. 형식: x.x.x.x"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # 네트워크 생성
@@ -29,7 +57,7 @@ class CreateNetwork(APIView):
                 network_id=network.id,
                 ip_version='4',
                 cidr=cidr,
-                gateway_ip=cidr.split('.')[0] + '.' + cidr.split('.')[1] + '.' + cidr.split('.')[2] + '.1'
+                gateway_ip=gateway_ip
             )
 
             return Response({
