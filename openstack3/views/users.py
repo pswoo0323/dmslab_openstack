@@ -3,34 +3,52 @@ from rest_framework.response import Response
 from rest_framework import status
 from openstack import connection
 from openstack3.models import User
-
+from openstack3.serializer import UserSerializer
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 def openstack_connection():
     conn = connection.from_config(cloud_name='default')
-
     return conn
 
 class UserRegister(APIView):
+    # Swagger에 표시할 요청 파라미터 정의
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='Username'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='Password'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description='Email'),
+            },
+            required=['username', 'password', 'email'],
+        ),
+        responses={
+            201: UserSerializer,  # 성공 시 UserSerializer 형식으로 응답
+            400: 'Bad Request',
+
+        }
+    )
     def post(self, request):
         conn = openstack_connection()
         username = request.data.get('username')
-        password= request.data.get('password')
+        password = request.data.get('password')
         email = request.data.get('email')
 
         if not username or not password:
-            return Response({"error": "username, password error"})
+            return Response({"error": "username, password error"}, status=status.HTTP_400_BAD_REQUEST)
 
         user = conn.identity.create_user(
-            name = username,
-            password= password,
-            email= email
+            name=username,
+            password=password,
+            email=email
         )
 
         db_user = User(username=username, password=password, email=email)
         db_user.save()
 
-        return Response({"user_ID": user.id, "username": user.name},
-                        status= status.HTTP_201_CREATED)
+        return Response(UserSerializer(db_user).data, status=status.HTTP_201_CREATED)
+
 
 class UserList(APIView):
     def get(self, request):

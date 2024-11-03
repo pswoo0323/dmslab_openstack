@@ -1,5 +1,5 @@
 from django.urls import path
-from openstack3.views.users import UserList, UserCreate, UserDelete, AssignAdminRole, AdminUser, UserRegister
+from openstack3.views.users import UserList, UserDelete, AdminUser, UserRegister
 from openstack3.views.projects import Create_Project, List_Project
 from openstack3.views.resources import CreateNetwork, CreateKeyPair, CreateImage, CreateInstance, CreateFlavor
 
