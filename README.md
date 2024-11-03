@@ -1,5 +1,5 @@
 # dmslab_openstack 
-![png-transparent-openstack-hd-logo](https://github.com/user-attachments/assets/120586de-e066-4e39-ab89-0d3d8d556c57)
+![openstack-logo2](https://github.com/user-attachments/assets/b5fdcfa1-2c5c-489a-a7cb-6d86a5f4d25e)
 
 <br>
 
