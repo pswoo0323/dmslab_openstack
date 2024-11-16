@@ -11,7 +11,7 @@ def openstack_connection():
 class Create_Project(APIView):
     def post(self, request):
         conn = openstack_connection()
-        project_name = request.data.get('project_name')
+        project_name =  request.data.get('project_name')
 
         if not project_name:
             return Response({"error": "프로젝트 이름을 기재해 주세요."},

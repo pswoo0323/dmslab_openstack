@@ -1,100 +1,117 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from openstack import connection
-from openstack3.domain.models import User
-from openstack3.serializer import UserSerializer
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 
-def openstack_connection():
-    conn = connection.from_config(cloud_name='default')
-    return conn
+from openstack3.serializer import UserRegistrationSerializer, UserLoginSerializer
+from openstack3.models.users import CustomUser
+from openstack3.serializer import UserPendingApprovalSerializer
+from openstack3.utils.token import get_cached_openstack_token
 
-class UserRegister(APIView):
-    # Swagger에 표시할 요청 파라미터 정의
+class UserRegistrationView(APIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='Username'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='Password'),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, description='Email'),
+                'userID': openapi.Schema(type=openapi.TYPE_STRING),
+                'userPW': openapi.Schema(type=openapi.TYPE_STRING),
+                'userEmail': openapi.Schema(type=openapi.TYPE_STRING),
+                'userName': openapi.Schema(type=openapi.TYPE_STRING),
+                'userRole': openapi.Schema(type=openapi.TYPE_STRING,
+                                           enum=['학생','석사','박사','교수','기타'],
+                                           ),
             },
-            required=['username', 'password', 'email'],
-        ),
-        responses={
-            201: UserSerializer,  # 성공 시 UserSerializer 형식으로 응답
-            400: 'Bad Request',
+            required=['userID','userPW','userEmail','userName','userRole'],
+    ),
+    responses={
+        201: '회원가입 요청 완료. 관리자 승인 대기.',
+        404: '404_Bad Request'
+    })
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"message": "회원가입 요청이 완료되었습니다. 관리자의 승인을 기다려주세요."},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ApproveUserView(APIView):
+    permission_classes = [IsAdminUser]  # 관리자만 접근 가능
+    @swagger_auto_schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'uuid_userID': openapi.Schema(type=openapi.TYPE_STRING)},
+        required=['uuid_userID'],
+    responses = {
+        201: '회원 승인이 완료되었습니다.',
+        404: '404_Bad Request'
+    })
+    def post(self, request, user_id):
+        try:
+            user = CustomUser.objects.get(uuid=user_id)
+            user.approve = True
+            user.save()
+            return Response({"message": f"{user.userID} 사용자가 승인되었습니다."}, status=status.HTTP_200_OK)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "해당 사용자를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+
+class PendingApprovalUsersView(APIView):
+    permission_classes = [IsAdminUser]  # 관리자만 접근 가능
+
+    @swagger_auto_schema(
+        operation_description="승인 대기 중인 사용자 목록을 조회합니다.",
+        responses={200: UserPendingApprovalSerializer(many=True)}
+    )
+    def get(self, request):
+        # 승인되지 않은 사용자만 필터링
+        pending_users = CustomUser.objects.filter(approve=False)
+        serializer = UserPendingApprovalSerializer(pending_users, many=True)
+        return Response(serializer.data)
+
+class UserLoginView(APIView):
+    @swagger_auto_schema(
+        request_body=UserLoginSerializer,
+        operation_description="승인된 사용자가 로그인하여 OpenStack 토큰을 발급받습니다.",
+        responses={
+            200: openapi.Response(
+                description="로그인 성공"),
+            400: "Bad Request"
         }
     )
     def post(self, request):
-        conn = openstack_connection()
-        username = request.data.get('username')
-        password = request.data.get('password')
-        email = request.data.get('email')
+        serializer = UserLoginSerializer(data=request.data)
 
-        if not username or not password:
-            return Response({"error": "username, password error"}, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
 
-        user = conn.identity.create_user(
-            name=username,
-            password=password,
-            email=email
-        )
+            token = get_cached_openstack_token(user.userID)
 
-        db_user = User(username=username, password=password, email=email)
-        db_user.save()
+            return Response({
+                "message": f"{user.userID}님, 로그인에 성공하였습니다.",
+                "access_token": access_token,
+                "refresh_token": str(refresh),
+                "openstack_token": token,
+                "userID": user.userID,
+                "userEmail":user.userEmail
+            }, status=status.HTTP_200_OK)
 
-        return Response(UserSerializer(db_user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated] #jwt인증된 사람만
 
-class UserList(APIView):
     def get(self, request):
-        conn = openstack_connection()
-        users = conn.identity.users()
-        user_list = [{"user_name": user.name, "user_id": user.id} for user in users]
-        return Response(user_list, status=status.HTTP_200_OK)
+        user = request.user #jwt에서 디코딩된 사용자 정보
 
-
-class UserDelete(APIView):
-    def post(self, request):
-        conn = openstack_connection()
-        username = request.data.get('user_name')
-
-        try:
-            # 사용자 이름으로 ID 조회
-            user = conn.identity.find_user(username, ignore_missing=True)
-
-            # 유저가 없을 경우 에러 반환
-            if not user:
-                return Response({"error": "User not found"},
-                                status=status.HTTP_404_NOT_FOUND)
-
-            # 사용자 ID로 삭제 openstack은 사용자name이 아니라 id로 삭제 가능
-            conn.identity.delete_user(user.id, ignore_missing=True)
-            return Response({"message": "유저 삭제 성공"},
-                            status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-class AdminUser(APIView):
-    def post(self, request):
-        conn = openstack_connection()
-        user_id = request.data.get('user_id')
-        project_id = request.data.get('project_id')
-
-        if not user_id or not project_id:
-            return Response({"error":"유저와 프로젝트가 존재하지 않습니다."},
-                            status = status.HTTP_404_NOT_FOUND)
-
-        admin_role = conn.identity.find_role("admin")
-
-        try:
-            conn.identity.assign_project_role_to_user(user_id, project_id, role=admin_role.id)
-            return Response({"message": "관리자 권한을 얻었습니다."},
-                            status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            "user_id": user.userID,
+            "username": user.userName,
+            "email": user.userEmail
+        })

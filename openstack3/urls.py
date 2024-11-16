@@ -1,24 +1,44 @@
 from django.urls import path
-from openstack3.views.users import UserList, UserDelete, AdminUser, UserRegister
+from openstack3.views.project_users import AdminUser, ProjectUserCreate, ProjectUserList, ProjectUserDelete, \
+    CheckCacheView
 from openstack3.views.projects import Create_Project, List_Project
-from openstack3.views.resources import CreateNetwork, CreateKeyPair, CreateImage, CreateInstance, CreateFlavor
+from openstack3.views.network import CreateNetwork
+from openstack3.views.keypair import CreateKeyPair
+from openstack3.views.flavor import CreateFlavor
+from openstack3.views.image import CreateImage
+from openstack3.views.instance import CreateInstance
+from openstack3.views.users import UserRegistrationView, ApproveUserView, PendingApprovalUsersView, UserLoginView, \
+    UserDetailView
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
-    #Projects
+    # user
+    path('register/', UserRegistrationView.as_view(), name='user_request'),
+    path('approve/<uuid:user_id>/', ApproveUserView.as_view(), name='user_approval'),
+    path('pending-approval-users/', PendingApprovalUsersView.as_view(), name='pending-approval-users'),
+    path('login/', UserLoginView.as_view(), name='user-login'),
+    path('user/token/', TokenObtainPairView.as_view(), name='user-token'),
+    path('user/token/refresh/', TokenRefreshView.as_view(), name='user-token-refresh'),
+    path('user/detail/', UserDetailView.as_view(), name='user-detail'),
+
+    # Projects
     path('project/create/', Create_Project.as_view(), name='project-create'),
     path('project/list/', List_Project.as_view(), name='project-list'),
-
-
-    #Users
-    path('user/register/',UserRegister.as_view(), name='user-register'),
-    path('user/list/', UserList.as_view(), name='user-list'),
-    path('user/delete/', UserDelete.as_view(), name='user-delete'),
+    path('project/user/create/', ProjectUserCreate.as_view(), name='Project-user-create'),
+    path('project/user/list/', ProjectUserList.as_view(), name='user-list'),
+    path('project/user/delete/', ProjectUserDelete.as_view(), name='user-delete'),
     path('admin/user/', AdminUser.as_view(), name='admin-user'),
 
-    #resources
+    # resources
     path('resources/network/create/', CreateNetwork.as_view(), name='network-create'),
     path('resources/keypair/', CreateKeyPair.as_view(), name='create-keypair'),
-    path('resources/image/', CreateImage.as_view(), name = 'create-image'),
-    path('resources/instance/', CreateInstance.as_view(), name= 'create-instance'),
-    path('resources/flavor/', CreateFlavor.as_view(), name = 'create-flavor'),
+    path('resources/image/', CreateImage.as_view(), name='create-image'),
+    path('resources/instance/', CreateInstance.as_view(), name='create-instance'),
+    path('resources/flavor/', CreateFlavor.as_view(), name='create-flavor'),
+
+    # util
+    path('cache/', CheckCacheView.as_view, name='check-cache'),
 ]

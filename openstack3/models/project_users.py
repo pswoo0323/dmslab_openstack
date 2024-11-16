@@ -1,10 +1,12 @@
 from datetime import datetime
 from tabnanny import verbose
 
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
-class User(models.Model):
+class ProjectUser(models.Model):
 
     id = models.BigAutoField(primary_key=True, verbose_name='user_num')
     username = models.CharField(max_length=150, unique = True, verbose_name='Openstack username')
@@ -19,5 +21,6 @@ class User(models.Model):
         return self.username
 
     class Meta:
-        db_table = 'users'
+        db_table = 'project_users'
         verbose_name_plural = 'DMSLAB Openstack'
+

@@ -25,7 +25,7 @@ schema_view = get_schema_view(
     openapi.Info(
         title="Swagger Study API",
         default_version="v1",
-        description="Swagger Study를 위한 API 문서",
+        description="Swagger API 문서",
         terms_of_service="https://www.google.com/policies/terms/",
         contact=openapi.Contact(name="test", email="psw8554@gmail.com"),
         license=openapi.License(name="Test License"),
@@ -35,12 +35,7 @@ schema_view = get_schema_view(
 )
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('openstack/', include('openstack3.urls')),
+    path('openstack3/', include('openstack3.urls')),  # 기존 앱 URL이 있다면 추가
+    re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
-
-# 디버그일때만 swagger 문서가 보이도록 해주는 설정
-if settings.DEBUG:
-    urlpatterns += [
-        re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name="schema-json"),
-        re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-        re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),    ]

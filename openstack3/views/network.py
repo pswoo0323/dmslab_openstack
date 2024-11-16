@@ -71,69 +71,54 @@ class CreateNetwork(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class CreateKeyPair(APIView):
-    def post(self, request):
+class DeleteNetwork(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={'network_id': openapi.Schema(type=openapi.TYPE_STRING, description='삭제할 네트워크 아이디')},
+            required=['network_id'],
+        ),
+        responses={200: '네트워크 삭제 성공', 400: 'Bad Request'}
+    )
+    def delete(self, request):
         conn = openstack_connection()
-        key_name = request.data.get('key_name')
+        network_id = request.data.get('network_id')
 
-        if not key_name:
-            return Response({"error": "키 이름 오류입니다."}, status=status.HTTP_400_BAD_REQUEST)
-
-        keypair = conn.compute.create_keypair(name=key_name)
-        return Response({"keypair": keypair.to_dict()}, status=status.HTTP_201_CREATED)
-
-
-class CreateImage(APIView):
-    def post(self, request):
-        conn = openstack_connection()
-        image_name = request.data.get('image_name')
-        filename = request.data.get('filename')
-
-        if not all([image_name, filename]):
-            return Response({"error": "이미지명과 파일명을 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
-
-        image = conn.image.create_image(name=image_name, filename=filename)
-        return Response({"image": image.to_dict()}, status=status.HTTP_201_CREATED)
-
-class CreateFlavor(APIView):
-    def post(self, request):
-        conn = connection.from_config(cloud_name='default')
-        flavor_name = request.data.get('flavor_name')
-        ram = request.data.get('ram')  # RAM 크기 (MB)
-        vcpus = request.data.get('vcpus')  # 가상 CPU 수
-        disk = request.data.get('disk')  # 디스크 크기 (GB)
-
-        if not all([flavor_name, ram, vcpus, disk]):
-            return Response({"error": "flavor_name, ram, vcpus, and disk are required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not network_id:
+            return Response({"error": "Network ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            flavor = conn.compute.create_flavor(
-                name=flavor_name,
-                ram=ram,
-                vcpus=vcpus,
-                disk=disk
-            )
-            return Response({"flavor": flavor.to_dict()}, status=status.HTTP_201_CREATED)
+            conn.network.delete_network(network_id, ignore_missing=True)
+            return Response({"message": "네트워크 삭제에 성공하였습니다."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class CreateInstance(APIView):
-    def post(self, request):
+class UpdateNetwork(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'network_id': openapi.Schema(type=openapi.TYPE_STRING, description='최신화할 네트워크 ID'),
+                'name': openapi.Schema(type=openapi.TYPE_STRING, description='New network name (optional)'),
+                'admin_state_up': openapi.Schema(type=openapi.TYPE_BOOLEAN, description='Admin state (optional)'),
+            },  #admin_state_up: True는 네트워크 리소스가 활성화 되어 있어 사용할 수 있는 상태
+                #                False는 비활성화 되어 있어 사용할 수 없는 상태
+            required=['network_id'],
+        ),
+        responses={200: 'Network updated successfully', 400: 'Bad Request'}
+    )
+    def patch(self, request):
         conn = openstack_connection()
-        server_name = request.data.get('server_name')
-        flavor_id = request.data.get('flavor_id')
-        image_id = request.data.get('image_id')
-        network_name = request.data.get('network_name')
+        network_id = request.data.get('network_id')
+        name = request.data.get('name')
+        admin_state_up = request.data.get('admin_state_up')
 
-        if not all([server_name, flavor_id, image_id, network_name]):
-            return Response({"error": "server_name, flaver_id, network_name을 다시 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+        if not network_id:
+            return Response({"error": "Network ID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        server = conn.compute.create_server(
-            name=server_name,
-            flavor_id=flavor_id,
-            image_id=image_id,
-            networks=[{"uuid": network_name}]
-        )
-        server = conn.compute.wait_for_server(server)
-        return Response({"server": server.to_dict()}, status=status.HTTP_201_CREATED)
+        try:
+            network = conn.network.update_network(network_id, name=name, admin_state_up=admin_state_up)
+            return Response({"network_id": network.id, "network_name": network.name, "admin_state_up": network.admin_state_up}, status=status.HTTP_200_OK)
 
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
