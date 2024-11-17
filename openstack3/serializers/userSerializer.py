@@ -8,21 +8,10 @@ from openstack3.utils.token import get_cached_openstack_token
 
 User = get_user_model()
 
-class ProjectUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProjectUser
-        fields = '__all__'
-
-class ResourcesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Resources
-        fields = '__all__'
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     userPW = serializers.CharField(write_only=True)  # 비밀번호는 write-only

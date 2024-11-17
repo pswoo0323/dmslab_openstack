@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from openstack import connection
 from openstack3.models.project_users import User
-from openstack3.serializer import UserSerializer, ProjectUserSerializer
+from openstack3.serializers.projectSerializer import  ProjectUserSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.cache import cache
@@ -11,8 +11,6 @@ from django.core.cache import cache
 def openstack_connection():
     conn = connection.from_config(cloud_name='default')
     return conn
-
-from django.core.cache import cache
 
 class ProjectUserCreate(APIView):
     @swagger_auto_schema(

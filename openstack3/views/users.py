@@ -6,9 +6,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 
-from openstack3.serializer import UserRegistrationSerializer, UserLoginSerializer
+from openstack3.serializers.userSerializer import UserRegistrationSerializer, UserLoginSerializer
 from openstack3.models.users import CustomUser
-from openstack3.serializer import UserPendingApprovalSerializer
+from openstack3.serializers.userSerializer import UserPendingApprovalSerializer
 from openstack3.utils.token import get_cached_openstack_token
 
 class UserRegistrationView(APIView):

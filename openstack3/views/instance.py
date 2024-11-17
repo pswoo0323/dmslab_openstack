@@ -5,7 +5,7 @@ from openstack import connection
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 import re
-from openstack3.serializer import ResourcesSerializer
+from openstack3.serializers.resourceSerializer import ResourcesSerializer
 
 def openstack_connection():
     conn = connection.from_config(cloud_name='default')
