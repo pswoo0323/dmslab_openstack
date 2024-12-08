@@ -73,7 +73,27 @@ class ListInstances(APIView):
 
 
 class DeleteInstance(APIView):
-    @swagger_auto_schema(operation_description="Instance 삭제")
+    @swagger_auto_schema(
+        operation_description="특정 인스턴스를 삭제.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'instance_id': openapi.Schema(type=openapi.TYPE_STRING, description='삭제할 인스턴스의 ID'),
+            },
+            required=['instance_id'],
+        ),
+        responses={
+            200: openapi.Response(
+                description="인스턴스 삭제 성공",
+                examples={
+                    "application/json": {"message": "Instance deleted successfully."}
+                },
+            ),
+            400: "잘못된 요청",
+            404: "인스턴스를 찾을 수 없습니다.",
+            500: "서버 에러",
+        }
+    )
     def delete(self, request):
         conn = openstack_connection()
         instance_id = request.data.get('instance_id')
