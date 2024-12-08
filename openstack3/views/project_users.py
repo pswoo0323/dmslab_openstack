@@ -88,7 +88,7 @@ class ProjectUserDelete(APIView):
 
             # 유저가 없을 경우 에러 반환
             if not user:
-                return Response({"error": "User not found"},
+                return Response({"error": "유저를 찾을 수 없습니다."},
                                 status=status.HTTP_404_NOT_FOUND)
 
             # 사용자 ID로 삭제 openstack은 사용자name이 아니라 id로 삭제 가능

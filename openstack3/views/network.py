@@ -182,7 +182,7 @@ class UpdateNetwork(APIView):
         admin_state_up = request.data.get('admin_state_up')
 
         if not network_id:
-            return Response({"error": "Network ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Network ID를 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # OpenStack 네트워크 업데이트

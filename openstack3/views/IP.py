@@ -27,10 +27,10 @@ class RequestIP(APIView):
         requested_by = request.data.get('requested_by')
 
         if not all([request_type, server_name, network_name, requested_by]):
-            return Response({"error": "All fields are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "모든 필드값을 넣어주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         if request_type not in ['public_ip', 'vpn_ip']:
-            return Response({"error": "Invalid request type. Use 'public_ip' or 'vpn_ip'."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "유효하지 않은 요청 타입입니다. Use 'public_ip' or 'vpn_ip'."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             ip_request = IPRequest.objects.create(
@@ -80,7 +80,7 @@ class ManageIPRequest(APIView):
                     # Create and assign Public IP
                     network = conn.network.find_network(ip_request.network_name)
                     if not network:
-                        return Response({"error": f"Network '{ip_request.network_name}' not found."}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error": f"Network '{ip_request.network_name}'를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
                     floating_ip = conn.network.create_ip(floating_network_id=network.id)
                     ip_request.ip_address = floating_ip.floating_ip_address
@@ -91,18 +91,18 @@ class ManageIPRequest(APIView):
 
                 ip_request.status = 'approved'
                 ip_request.save()
-                return Response({"message": "Request approved successfully.", "ip_address": ip_request.ip_address}, status=status.HTTP_200_OK)
+                return Response({"message": "요청이 성공적으로 승인되었습니다.", "ip_address": ip_request.ip_address}, status=status.HTTP_200_OK)
 
             elif action == 'reject':
                 ip_request.status = 'rejected'
                 ip_request.save()
-                return Response({"message": "Request rejected successfully."}, status=status.HTTP_200_OK)
+                return Response({"message": "요청이 성공적으로 거절되었습니다."}, status=status.HTTP_200_OK)
 
             else:
-                return Response({"error": "Invalid action. Use 'approve' or 'reject'."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "'approve' or 'reject'를 선택하여 주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         except IPRequest.DoesNotExist:
-            return Response({"error": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "요청을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

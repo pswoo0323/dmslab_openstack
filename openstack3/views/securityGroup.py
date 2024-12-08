@@ -84,11 +84,11 @@ class DeleteSecurityGroup(APIView):
         security_group_id = request.data.get('security_group_id')
 
         if not security_group_id:
-            return Response({"error": "Security Group ID is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Security Group ID를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             conn.network.delete_security_group(security_group_id, ignore_missing=True)
-            return Response({"message": "Security Group Deleted Successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": "Security Group 삭제가 완료되었습니다."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

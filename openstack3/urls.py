@@ -8,8 +8,8 @@ from openstack3.views.network import CreateNetworkRequest, ManageNetworkRequest,
     DeleteNetwork
 from openstack3.views.securityGroup import CreateSecurityGroup, ListSecurityGroups, DeleteSecurityGroup
 from openstack3.views.keypair import CreateKeyPair
-from openstack3.views.flavor import CreateFlavor
-from openstack3.views.image import CreateImage, ListImage
+from openstack3.views.flavor import CreateFlavor, UpdateFlavor, ListFlavors, DeleteFlavor
+from openstack3.views.image import CreateImage, ListImage, DeleteImage
 from openstack3.views.instance import CreateInstance
 from openstack3.views.users import UserRegistrationView, ApproveUserView, PendingApprovalUsersView, UserLoginView, \
     UserDetailView
@@ -34,7 +34,10 @@ urlpatterns = [
     path('admin/network/pending/', PendingNetwork.as_view(), name='network-pending-users'),
     path('admin/ip/manage/', ManageIPRequest.as_view(), name='ip-manage'),
     path('admin/image/create', CreateImage.as_view(), name='create-image'),
+    path('admin/image/delete', DeleteImage.as_view(), name='delete-image'),
     path('admin/flavor/create', CreateFlavor.as_view(), name='create-flavor'),
+    path('admin/flavor/update', UpdateFlavor.as_view(), name='update-flavor'),
+    path('admin/flavor/delete', DeleteFlavor.as_view(), name='delete-flavor'),
 
     # Projects
     path('project/create/', Create_Project.as_view(), name='project-create'),
@@ -44,7 +47,10 @@ urlpatterns = [
     path('project/user/delete/', ProjectUserDelete.as_view(), name='user-delete'),
     path('admin/user/', AdminUser.as_view(), name='admin-user'),
 
-    # resources
+    #resources
+
+    #flavor
+    path('flavor/list/', ListFlavors.as_view(), name='flavor-list'),
     # network
     path('network/request/', CreateNetworkRequest.as_view(), name='network-create'),
     path('network/update/', UpdateNetwork.as_view(), name='network-update'),
