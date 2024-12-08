@@ -8,9 +8,9 @@ from openstack3.views.network import CreateNetworkRequest, ManageNetworkRequest,
     DeleteNetwork
 from openstack3.views.securityGroup import CreateSecurityGroup, ListSecurityGroups, DeleteSecurityGroup
 from openstack3.views.keypair import CreateKeyPair
-from openstack3.views.flavor import CreateFlavor, UpdateFlavor, ListFlavors, DeleteFlavor
+from openstack3.views.flavor import CreateFlavor, ListFlavors, DeleteFlavor
 from openstack3.views.image import CreateImage, ListImage, DeleteImage
-from openstack3.views.instance import CreateInstance
+from openstack3.views.instance import CreateInstance, ListInstances, DeleteInstance
 from openstack3.views.users import UserRegistrationView, ApproveUserView, PendingApprovalUsersView, UserLoginView, \
     UserDetailView
 from rest_framework_simplejwt.views import (
@@ -63,6 +63,8 @@ urlpatterns = [
     path('ip/list/', ListIPRequests.as_view(), name='ip-list'),
     # instance
     path('instance/create', CreateInstance.as_view(), name='create-instance'),
+    path('instance/list', ListInstances.as_view(), name='list-instances'),
+    path('instance/delete', DeleteInstance.as_view(), name='delete-instance'),
 
     # securityGroup
     path('security/Create/', CreateSecurityGroup.as_view(), name='create-security-group'),
