@@ -53,54 +53,6 @@ class CreateFlavor(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class UpdateFlavor(APIView):
-    """Flavor 수정 API"""
-    permission_classes = [IsAdminUser]  # 관리자만 접근 가능
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'flavor_id': openapi.Schema(type=openapi.TYPE_STRING, description='Flavor ID'),
-                'ram': openapi.Schema(type=openapi.TYPE_INTEGER, description='New RAM size in MB'),
-                'vcpus': openapi.Schema(type=openapi.TYPE_INTEGER, description='New number of vCPUs'),
-                'disk': openapi.Schema(type=openapi.TYPE_INTEGER, description='New disk size in GB'),
-            },
-            required=['flavor_id'],
-        ),
-        responses={
-            200: 'Flavor updated successfully.',
-            400: 'Bad Request',
-            404: 'Flavor not found.',
-            500: 'Internal Server Error',
-        }
-    )
-    def patch(self, request):
-        conn = openstack_connection()
-        flavor_id = request.data.get('flavor_id')
-        ram = request.data.get('ram')
-        vcpus = request.data.get('vcpus')
-        disk = request.data.get('disk')
-
-        if not flavor_id:
-            return Response({"error": "flavor_id를 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            flavor = conn.compute.get_flavor(flavor_id)
-            if not flavor:
-                return Response({"error": "Flavor를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
-
-            # Flavor 업데이트는 일반적으로 지원되지 않지만 예를 위해 로직 추가
-            flavor = conn.compute.update_flavor(
-                flavor,
-                ram=ram or flavor.ram,
-                vcpus=vcpus or flavor.vcpus,
-                disk=disk or flavor.disk,
-            )
-            return Response({"message": "Flavor가 업데이트 되었습니다.", "flavor": flavor.to_dict()}, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 class ListFlavors(APIView):
     """Flavor 조회 API"""
     @swagger_auto_schema(

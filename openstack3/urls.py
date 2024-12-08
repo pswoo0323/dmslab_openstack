@@ -36,7 +36,6 @@ urlpatterns = [
     path('admin/image/create', CreateImage.as_view(), name='create-image'),
     path('admin/image/delete', DeleteImage.as_view(), name='delete-image'),
     path('admin/flavor/create', CreateFlavor.as_view(), name='create-flavor'),
-    path('admin/flavor/update', UpdateFlavor.as_view(), name='update-flavor'),
     path('admin/flavor/delete', DeleteFlavor.as_view(), name='delete-flavor'),
 
     # Projects
