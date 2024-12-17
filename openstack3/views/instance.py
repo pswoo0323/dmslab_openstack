@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,6 +14,7 @@ def openstack_connection():
     return conn
 
 class CreateInstance(APIView):
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         operation_description="새로운 인스턴스를 생성합니다.",
         request_body=openapi.Schema(
@@ -56,6 +58,8 @@ class CreateInstance(APIView):
         return Response({"server": server.to_dict()}, status=status.HTTP_201_CREATED)
 
 class ListInstances(APIView):
+    permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(operation_description="Instance 조회")
     def get(self, request):
         conn = openstack_connection()
@@ -73,6 +77,8 @@ class ListInstances(APIView):
 
 
 class DeleteInstance(APIView):
+    permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(
         operation_description="특정 인스턴스를 삭제.",
         request_body=openapi.Schema(

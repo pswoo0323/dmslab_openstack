@@ -12,7 +12,7 @@ from openstack3.views.flavor import CreateFlavor, ListFlavors, DeleteFlavor
 from openstack3.views.image import CreateImage, ListImage, DeleteImage
 from openstack3.views.instance import CreateInstance, ListInstances, DeleteInstance
 from openstack3.views.users import UserRegistrationView, ApproveUserView, PendingApprovalUsersView, UserLoginView, \
-    UserDetailView
+    UserDetailView, UserLogoutView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -28,6 +28,7 @@ urlpatterns = [
     path('user/token/', TokenObtainPairView.as_view(), name='user-token'),
     path('user/token/refresh/', TokenRefreshView.as_view(), name='user-token-refresh'),
     path('user/detail/', UserDetailView.as_view(), name='user-detail'),
+    path('user/logout/', UserLogoutView.as_view(), name='user-logout'),
 
     # admin
     path('admin/network/manage/', ManageNetworkRequest.as_view(), name='network-manage'),

@@ -1,6 +1,7 @@
 import os.path
 from http.client import responses
 
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,7 +18,7 @@ def openstack_connection():
 
 
 class CreateKeyPair(APIView):
-
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,

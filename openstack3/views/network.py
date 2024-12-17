@@ -1,6 +1,7 @@
 from tkinter.font import names
 
 from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -19,6 +20,7 @@ def openstack_connection():
 
 
 class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -72,6 +74,7 @@ class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
 
 
 class ManageNetworkRequest(APIView):  # 관리자가 네트워크 요청을 수락or거절 /default는 대기
+    permission_classes = [IsAdminUser]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -132,6 +135,7 @@ class ManageNetworkRequest(APIView):  # 관리자가 네트워크 요청을 수�
 
 
 class DeleteNetwork(APIView):
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -208,7 +212,7 @@ class UpdateNetwork(APIView):
 
 
 class PendingNetwork(APIView):  # 관리자가 network요청을 확인하는 api
-
+    permission_classes = [IsAdminUser]
     def get(self, request):
         # Pending 상태의 요청 가져오기
         pending_requests = Resources.objects.filter(status='pending', deleted_at__isnull=True)

@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -7,6 +8,8 @@ from openstack3.models.IP import IPRequest
 
 
 class RequestIP(APIView):
+    permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -53,6 +56,7 @@ def openstack_connection():
 
 
 class ManageIPRequest(APIView):
+    permission_classes = [IsAdminUser]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -108,6 +112,7 @@ class ManageIPRequest(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListIPRequests(APIView):
+    permission_classes = [IsAdminUser]
     def get(self, request):
         requests = IPRequest.objects.all()
         request_data = [
