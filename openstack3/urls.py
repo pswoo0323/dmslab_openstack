@@ -3,11 +3,11 @@ from django.urls import path
 from openstack3.views.IP import RequestIP, ListIPRequests, ManageIPRequest
 from openstack3.views.project_users import AdminUser, ProjectUserCreate, ProjectUserList, ProjectUserDelete, \
     CheckCacheView
-from openstack3.views.projects import Create_Project, List_Project
+from openstack3.views.projects import CreateProject, DeleteProject, ListProjects
 from openstack3.views.network import CreateNetworkRequest, ManageNetworkRequest, PendingNetwork, UpdateNetwork, \
     DeleteNetwork
 from openstack3.views.securityGroup import CreateSecurityGroup, ListSecurityGroups, DeleteSecurityGroup
-from openstack3.views.keypair import CreateKeyPair
+from openstack3.views.keypair import CreateKeyPair, ListKeyPair, DeleteKeyPair
 from openstack3.views.flavor import CreateFlavor, ListFlavors, DeleteFlavor
 from openstack3.views.image import CreateImage, ListImage, DeleteImage
 from openstack3.views.instance import CreateInstance, ListInstances, DeleteInstance
@@ -40,8 +40,9 @@ urlpatterns = [
     path('admin/flavor/delete', DeleteFlavor.as_view(), name='delete-flavor'),
 
     # Projects
-    path('project/create/', Create_Project.as_view(), name='project-create'),
-    path('project/list/', List_Project.as_view(), name='project-list'),
+    path('project/create/', CreateProject.as_view(), name='project-create'),
+    path('project/delete/', DeleteProject.as_view(), name='project-delete'),
+    path('project/list/', ListProjects.as_view(), name='project-list'),
     path('project/user/create/', ProjectUserCreate.as_view(), name='Project-user-create'),
     path('project/user/list/', ProjectUserList.as_view(), name='user-list'),
     path('project/user/delete/', ProjectUserDelete.as_view(), name='user-delete'),
@@ -57,6 +58,8 @@ urlpatterns = [
     path('network/delete/', DeleteNetwork.as_view(), name='network-delete'),
     # keypair
     path('keypair/create/', CreateKeyPair.as_view(), name='create-keypair'),
+    path('keypair/list/', ListKeyPair.as_view(), name='list-keypair'),
+    path('keypair/delete/', DeleteKeyPair.as_view(), name='delete-keypair'),
     # images
     path('image/list/', ListImage.as_view(), name='image-list'),
     # IP

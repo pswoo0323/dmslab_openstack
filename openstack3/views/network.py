@@ -159,7 +159,7 @@ class DeleteNetwork(APIView):
                 # Resources 모델에서 데이터 삭제
                 Resources.objects.filter(network_id=network_id).delete()
 
-                return Response({"message": "네트워크 삭제에 성공하였습니다."}, status=status.HTTP_200_OK)
+                return Response({"message": f"'{network_id}' 네트워크가 삭제되었습니다."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

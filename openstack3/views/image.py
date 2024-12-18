@@ -143,11 +143,11 @@ class DeleteImage(APIView):
         if not image_name:
             return Response({"삭제하고자 하는 이미지 이름을 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            image = conn.image.delete_image(image_name)
+            image = conn.image.find_image(image_name)
             if not image:
                 return Response({"이미지를 찾을 수 없습니다. 다시 확인해 주세요."}, status=status.HTTP_404_NOT_FOUND)
 
             conn.image.delete_image(image_name)
-            return Response({"이미지가 성공적으로 삭제되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": f"'{image_name}' 이미지가 삭제되었습니다."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

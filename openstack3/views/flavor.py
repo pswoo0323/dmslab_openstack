@@ -106,6 +106,6 @@ class DeleteFlavor(APIView):
                 return Response({"error": "Flavor를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
 
             conn.compute.delete_flavor(flavor_id)
-            return Response({"message": "Flavor가 성공적으로 삭제되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": f"'{flavor_id}' Flavor가 삭제되었습니다."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
