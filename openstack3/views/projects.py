@@ -50,7 +50,6 @@ def openstack_connection():
 class CreateProject(APIView):
 
     permission_classes = [IsAuthenticated]
-
     @swagger_auto_schema(
         operation_description="새로운 OpenStack 프로젝트를 생성합니다.",
         request_body=openapi.Schema(
@@ -84,7 +83,7 @@ class CreateProject(APIView):
         domain_id = request.data.get('domain_id', 'default')
 
         if not project_name:
-            return Response({"error": "프로젝트 이름은 필수입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Project name is required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # 프로젝트 생성
@@ -95,7 +94,7 @@ class CreateProject(APIView):
             )
             return Response(
                 {
-                    "message": "프로젝트가 성공적으로 생성되었습니다.",
+                    "message": "Project created successfully.",
                     "project_id": project.id,
                     "project_name": project.name,
                 },
@@ -106,7 +105,6 @@ class CreateProject(APIView):
 
 
 class DeleteProject(APIView):
-
     permission_classes = [IsAdminUser]  # 관리자만 접근 가능
 
     @swagger_auto_schema(
@@ -122,7 +120,7 @@ class DeleteProject(APIView):
             200: openapi.Response(
                 description="프로젝트 삭제 성공",
                 examples={
-                    "application/json": {"message": "프로젝트가 성공적으로 삭제되었습니다."}
+                    "application/json": {"message": "Project deleted successfully."}
                 },
             ),
             400: "Bad Request",
@@ -135,22 +133,50 @@ class DeleteProject(APIView):
         project_id = request.data.get('project_id')
 
         if not project_id:
-            return Response({"error": "project_id는 필수입니다."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "project_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             # 프로젝트 확인
             project = conn.identity.find_project(project_id)
             if not project:
-                return Response({"error": "해당 프로젝트를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "The specified project cannot be found."}, status=status.HTTP_404_NOT_FOUND)
 
             # 프로젝트 삭제
             conn.identity.delete_project(project_id, ignore_missing=True)
-            return Response({"message": f"'{project_id}' 프로젝트가 삭제되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": f"'{project_id}' Project deleted successfully."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ListProjects(APIView):
-    @swagger_auto_schema(operation_description="프로젝트 리스트 확인")
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="OpenStack에서 프로젝트 리스트를 확인합니다.",
+        responses={
+            200: openapi.Response(
+                description="프로젝트 리스트 조회 성공",
+                examples={
+                    "application/json": [
+                        {
+                            "id": "1234abcd",
+                            "name": "Test Project 1"
+                        },
+                        {
+                            "id": "5678efgh",
+                            "name": "Test Project 2"
+                        }
+                    ]
+                },
+            ),
+            500: openapi.Response(
+                description="서버 에러",
+                examples={
+                    "application/json": {
+                        "error": "Internal server error message"
+                    }
+                },
+            ),
+        },
+    )
     def get(self, request):
         conn = openstack_connection()
         try:

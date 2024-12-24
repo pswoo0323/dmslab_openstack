@@ -1,3 +1,5 @@
+from http.client import responses
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
@@ -43,16 +45,19 @@ class UserRegistrationView(APIView):
 
 class ApproveUserView(APIView):
     permission_classes = [IsAdminUser]  # 관리자만 접근 가능
-
     @swagger_auto_schema(
+        operation_description="관리자가 사용 신청한 유저를 확인하고 승인합니다.",
+        request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
-            'uuid_userID': openapi.Schema(type=openapi.TYPE_STRING)},
+            'uuid_userID': openapi.Schema(type=openapi.TYPE_STRING)
+        },
         required=['uuid_userID'],
         responses={
-            201: '회원 승인이 완료되었습니다.',
-            404: '404_Bad Request'
-        })
+            201: '[userID] 사용자가 승인되었습니다.',
+            404: '해당 사용자를 찾을 수 없습니다.'
+        }
+    ))
     def post(self, request, user_id):
         try:
             user = CustomUser.objects.get(uuid=user_id)
@@ -79,8 +84,8 @@ class PendingApprovalUsersView(APIView):
 
 class UserLoginView(APIView):
     @swagger_auto_schema(
-        request_body=UserLoginSerializer,
         operation_description="승인된 사용자가 로그인하여 OpenStack 토큰을 발급받습니다.",
+        request_body=UserLoginSerializer,
         responses={
             200: openapi.Response(
                 description="로그인 성공"),

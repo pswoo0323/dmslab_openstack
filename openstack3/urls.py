@@ -33,6 +33,7 @@ urlpatterns = [
     # admin
     path('admin/network/manage/', ManageNetworkRequest.as_view(), name='network-manage'),
     path('admin/network/pending/', PendingNetwork.as_view(), name='network-pending-users'),
+    path('admin/network/update/', UpdateNetwork.as_view(), name='network-update'),
     path('admin/ip/manage/', ManageIPRequest.as_view(), name='ip-manage'),
     path('admin/image/create', CreateImage.as_view(), name='create-image'),
     path('admin/image/delete', DeleteImage.as_view(), name='delete-image'),
@@ -48,13 +49,12 @@ urlpatterns = [
     path('project/user/delete/', ProjectUserDelete.as_view(), name='user-delete'),
     path('admin/user/', AdminUser.as_view(), name='admin-user'),
 
-    #resources
+    # resources
 
-    #flavor
+    # flavor
     path('flavor/list/', ListFlavors.as_view(), name='flavor-list'),
     # network
     path('network/request/', CreateNetworkRequest.as_view(), name='network-create'),
-    path('network/update/', UpdateNetwork.as_view(), name='network-update'),
     path('network/delete/', DeleteNetwork.as_view(), name='network-delete'),
     # keypair
     path('keypair/create/', CreateKeyPair.as_view(), name='create-keypair'),

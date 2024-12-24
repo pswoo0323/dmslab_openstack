@@ -70,6 +70,7 @@ class ListSecurityGroups(APIView):
 # Delete Security Group
 class DeleteSecurityGroup(APIView):
     @swagger_auto_schema(
+        operation_description="사용자가 보안그룹을 생성합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -84,11 +85,11 @@ class DeleteSecurityGroup(APIView):
         security_group_id = request.data.get('security_group_id')
 
         if not security_group_id:
-            return Response({"error": "Security Group ID를 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Please check the security_group_id again"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             conn.network.delete_security_group(security_group_id, ignore_missing=True)
-            return Response({"message": "Security Group 삭제가 완료되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": "Security Group deleted successfully."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

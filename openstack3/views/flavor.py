@@ -15,6 +15,7 @@ def openstack_connection():
 class CreateFlavor(APIView):
     permission_classes = [IsAdminUser]  # 관리자만 접근 가능
     @swagger_auto_schema(
+        operation_description="관리자가 Flavor을 생성합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -56,6 +57,7 @@ class CreateFlavor(APIView):
 class ListFlavors(APIView):
     """Flavor 조회 API"""
     @swagger_auto_schema(
+        operation_description="사용자가 flavor 리스트를 조회합니다.",
         responses={
             200: 'Flavor list retrieved successfully.',
             500: 'Internal Server Error',
@@ -91,6 +93,7 @@ class DeleteFlavor(APIView):
             },
             required=['flavor_id'],
         ),
+        responses={200: "flavor deleted successfully.", 404: "flavor not found"},
     )
     def delete(self, request):
         conn = openstack_connection()

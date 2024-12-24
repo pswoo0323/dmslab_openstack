@@ -21,6 +21,7 @@ class CreateKeyPair(APIView):
     permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
+        operation_description="Keypair를 생성합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -40,13 +41,13 @@ class CreateKeyPair(APIView):
         public_key = request.data.get('public_key')
 
         if not keypair_name:
-            return Response({"error": "키페어 이름을 입력해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Check the keypair name again"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # 체크
             existing_keypair = conn.compute.find_keypair(keypair_name)
             if existing_keypair:
-                return Response({"error": "이미 존재하는 키페어 입니다."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "The keypair aleady exists."}, status=status.HTTP_400_BAD_REQUEST)
 
             # 키페어 생성
             if public_key:
@@ -65,7 +66,7 @@ class CreateKeyPair(APIView):
                 # 0: 그룹과 다른 사용자에게는 권한 없음.
 
             response_data = {
-                "message": "키페어가 생성되었습니다.",
+                "message": "Keypair created successfully.",
                 "keypair_name": keypair.name,
                 "public_key": keypair.public_key,
             }
@@ -82,7 +83,7 @@ class CreateKeyPair(APIView):
 class DeleteKeyPair(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(operation_description="키페어 삭제"
+    @swagger_auto_schema(operation_description="키페어를 삭제합니다."
         , request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={"keypair_name": openapi.Schema(type=openapi.TYPE_STRING, description="삭제할 키페어 이름")},
@@ -93,21 +94,52 @@ class DeleteKeyPair(APIView):
         keypair_name = request.data.get('keypair_name')
 
         if not keypair_name:
-            return Response({"키페어 이름을 확인해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Check the keypair name again."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             existing_keypair = conn.compute.find_keypair(keypair_name)
             if not existing_keypair:
-                return Response({"삭제하고자 하는 키페어를 찾을 수 없습니다. 다시 확인해주세요."},
+                return Response({"Not found keypair. check again you want to delete"},
                                 status=status.HTTP_404_NOT_FOUND)
 
             conn.compute.delete_keypair(keypair_name)
-            return Response({"message": f"'{keypair_name}' 키페어가 삭제되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": f"'{keypair_name}' Keypair deleted successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class ListKeyPair(APIView):
-    @swagger_auto_schema(operation_description="키페어 리스트")
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        operation_description="모든 키페어 정보를 조회합니다.",
+        responses={
+            200: openapi.Response(
+                description="키페어 조회 성공",
+                examples={
+                    "application/json": {
+                        "keypairs": [
+                            {
+                                "name": "example-keypair",
+                                "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAr...",
+                            },
+                            {
+                                "name": "another-keypair",
+                                "public_key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEBr...",
+                            }
+                        ]
+                    }
+                },
+            ),
+            500: openapi.Response(
+                description="서버 에러",
+                examples={
+                    "application/json": {
+                        "error": "Internal server error message"
+                    }
+                },
+            ),
+        },
+        tags=["KeyPairs"]
+    )
     def get(self, request):
         conn = openstack_connection()
         try:

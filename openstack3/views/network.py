@@ -22,6 +22,7 @@ def openstack_connection():
 class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
     permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
+        operation_description="사용자가 사용하고자 하는 네트워크를 관리자에게 요청합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -47,13 +48,13 @@ class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
         ip_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
 
         if not all([network_name, subnet_name, cidr, gateway_ip, requested_by]):
-            return Response({"error": "입력을 확인해 주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Please check the input."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not re.match(cidr_pattern, cidr):
-            return Response({"error": "CIDR 형식이 올바르지 않습니다. 형식: x.x.x.x/x"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "The CIDR format is invalid. format: x.x.x.x/x"}, status=status.HTTP_400_BAD_REQUEST)
 
         if not re.match(ip_pattern, gateway_ip):
-            return Response({"error": "Gateway IP 형식이 올바르지 않습니다. 형식: x.x.x.x"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "The gatewayIP format is invalid. format: x.x.x.x"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # Resources 모델에 요청 저장
@@ -66,7 +67,7 @@ class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
                 status='pending'  # 요청 상태는 기본값으로 'pending'
 
             )
-            return Response({"message": "요청이 성공적으로 제출되었습니다.", "request_id": resource.id},
+            return Response({"message": "The request has been successfully submitted.", "request_id": resource.id},
                             status=status.HTTP_201_CREATED)
 
         except Exception as e:
@@ -75,16 +76,63 @@ class CreateNetworkRequest(APIView):  # 사용자가 네트워크 요청
 
 class ManageNetworkRequest(APIView):  # 관리자가 네트워크 요청을 수락or거절 /default는 대기
     permission_classes = [IsAdminUser]
+
     @swagger_auto_schema(
+        operation_description="관리자가 네트워크 요청을 수락하거나 거절합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'request_id': openapi.Schema(type=openapi.TYPE_INTEGER, description='Request ID'),
-                'action': openapi.Schema(type=openapi.TYPE_STRING, description="Action ('approve' or 'reject')"),
+                'request_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='요청 ID'
+                ),
+                'action': openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="요청 작업 ('approve' 또는 'reject')"
+                ),
             },
             required=['request_id', 'action'],
+            example={
+                "request_id": 1,
+                "action": "approve"
+            },
         ),
-        responses={200: 'Request processed successfully', 400: 'Bad Request'}
+        responses={
+            200: openapi.Response(
+                description="요청 처리 성공",
+                examples={
+                    "application/json": {
+                        "message": "네트워크 요청이 승인되었습니다.",
+                        "network_id": "1234abcd",
+                        "subnet_id": "5678efgh"
+                    }
+                },
+            ),
+            400: openapi.Response(
+                description="잘못된 요청",
+                examples={
+                    "application/json": {
+                        "error": "Request ID and action are required."
+                    }
+                },
+            ),
+            404: openapi.Response(
+                description="요청을 찾을 수 없음",
+                examples={
+                    "application/json": {
+                        "error": "Request not found."
+                    }
+                },
+            ),
+            500: openapi.Response(
+                description="서버 에러",
+                examples={
+                    "application/json": {
+                        "error": "Internal server error message"
+                    }
+                },
+            ),
+        },
     )
     def post(self, request):
         request_id = request.data.get('request_id')
@@ -137,10 +185,14 @@ class ManageNetworkRequest(APIView):  # 관리자가 네트워크 요청을 수�
 class DeleteNetwork(APIView):
     permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
+        operation_description="네트워크를 삭제합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={'network_id': openapi.Schema(type=openapi.TYPE_STRING, description='삭제할 네트워크 아이디')},
             required=['network_id'],
+            example={
+                "network_id": "1234abcd"
+            },
         ),
         responses={200: '네트워크 삭제 성공', 400: 'Bad Request'}
     )
@@ -159,14 +211,16 @@ class DeleteNetwork(APIView):
                 # Resources 모델에서 데이터 삭제
                 Resources.objects.filter(network_id=network_id).delete()
 
-                return Response({"message": f"'{network_id}' 네트워크가 삭제되었습니다."}, status=status.HTTP_200_OK)
+                return Response({"message": f"'{network_id}' Network deleted successfully."}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class UpdateNetwork(APIView):
+    permission_classes = [IsAdminUser]
     @swagger_auto_schema(
+        operation_description="관리자가 네트워크를 최신화 합니다.",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
@@ -213,6 +267,46 @@ class UpdateNetwork(APIView):
 
 class PendingNetwork(APIView):  # 관리자가 network요청을 확인하는 api
     permission_classes = [IsAdminUser]
+    @swagger_auto_schema(
+        operation_description="Pending 상태의 네트워크 요청을 확인합니다.",
+        responses={
+            200: openapi.Response(
+                description="성공적으로 요청 목록을 반환합니다.",
+                examples={
+                    "application/json": [
+                        {
+                            "id": 1,
+                            "network": "default-network",
+                            "subnet": "default-subnet",
+                            "CIDR": "192.168.1.0/24",
+                            "gateway": "192.168.1.1",
+                            "status": "pending",
+                            "created_at": "2023-01-01T12:00:00Z",
+                            "requested_by": "admin"
+                        },
+                        {
+                            "id": 2,
+                            "network": "custom-network",
+                            "subnet": "custom-subnet",
+                            "CIDR": "10.0.0.0/24",
+                            "gateway": "10.0.0.1",
+                            "status": "pending",
+                            "created_at": "2023-01-02T14:30:00Z",
+                            "requested_by": "user1"
+                        }
+                    ]
+                },
+            ),
+            403: openapi.Response(
+                description="권한 없음",
+                examples={
+                    "application/json": {
+                        "error": "You do not have permission to perform this action."
+                    }
+                },
+            ),
+        },
+    )
     def get(self, request):
         # Pending 상태의 요청 가져오기
         pending_requests = Resources.objects.filter(status='pending', deleted_at__isnull=True)

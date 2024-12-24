@@ -46,7 +46,7 @@ class CreateInstance(APIView):
         network_name = request.data.get('network_name')
 
         if not all([server_name, flavor_id, image_id, network_name]):
-            return Response({"error": "server_name, flaver_id, network_name을 다시 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Please double-check the server name, flavor ID, and network name."}, status=status.HTTP_400_BAD_REQUEST)
 
         server = conn.compute.create_server(
             name=server_name,
@@ -60,7 +60,38 @@ class CreateInstance(APIView):
 class ListInstances(APIView):
     permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(operation_description="Instance 조회")
+    @swagger_auto_schema(
+        operation_description="모든 인스턴스 정보를 조회합니다.",
+        responses={
+            200: openapi.Response(
+                description="인스턴스 조회 성공",
+                examples={
+                    "application/json": {
+                        "instances": [
+                            {
+                                "id": "123e4567-e89b-12d3-a456-426614174000",
+                                "name": "test-instance-1",
+                                "status": "ACTIVE"
+                            },
+                            {
+                                "id": "789e4567-e89b-12d3-a456-426614174001",
+                                "name": "test-instance-2",
+                                "status": "SHUTOFF"
+                            }
+                        ]
+                    }
+                },
+            ),
+            500: openapi.Response(
+                description="서버 에러",
+                examples={
+                    "application/json": {
+                        "error": "Internal server error message"
+                    }
+                },
+            ),
+        },
+    )
     def get(self, request):
         conn = openstack_connection()
 
@@ -78,7 +109,6 @@ class ListInstances(APIView):
 
 class DeleteInstance(APIView):
     permission_classes = [IsAuthenticated]
-
     @swagger_auto_schema(
         operation_description="특정 인스턴스를 삭제.",
         request_body=openapi.Schema(
@@ -105,12 +135,12 @@ class DeleteInstance(APIView):
         instance_id = request.data.get('instance_id')
 
         if not instance_id:
-            return Response({"삭제하고자 하는 인스턴스 id(server id)를 확인해주세요."},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Please check the instance ID you want to delete"},status=status.HTTP_400_BAD_REQUEST)
         try:#인스턴스 존재 확인
             server = conn.compute.server(instance_id)
             if not server:
-                return Response({"error":"인스턴스를 찾을 수 없습니다. 다시 확인해주세요."},status = status.HTTP_404_NOT_FOUND)
+                return Response({"error":"Instance not found. Please check again"},status = status.HTTP_404_NOT_FOUND)
             conn.compute.delete_server(instance_id)
-            return Response({"message":"인스턴스 삭제가 완료되었습니다."},status=status.HTTP_200_OK)
+            return Response({"message":"Instance deleted successfully"},status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"errpr": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
