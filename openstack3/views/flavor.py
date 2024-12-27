@@ -22,7 +22,7 @@ class CreateFlavor(APIView):
                 'flavor_name': openapi.Schema(type=openapi.TYPE_STRING, description='Flavor name'),
                 'ram': openapi.Schema(type=openapi.TYPE_INTEGER, description='RAM size in MB'),
                 'vcpus': openapi.Schema(type=openapi.TYPE_INTEGER, description='Number of vCPUs'),
-                'disk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Disk size in GB'),
+                'disk': openapi.Schema(type=openapi.TYPE_INTEGER, description='Disk size in GB(Default: 0)'),
             },
             required=['flavor_name', 'ram', 'vcpus', 'disk'],
         ),
@@ -37,10 +37,10 @@ class CreateFlavor(APIView):
         flavor_name = request.data.get('flavor_name')
         ram = request.data.get('ram')  # RAM 크기 (MB)
         vcpus = request.data.get('vcpus')  # 가상 CPU 수
-        disk = request.data.get('disk')  # 디스크 크기 (GB)
+        disk = request.data.get('disk', 0)  # 디스크 크기 (GB)(기본값 0)
 
-        if not all([flavor_name, ram, vcpus, disk]):
-            return Response({"error": "flavor_name, ram, vcpus, and disk are required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not all([flavor_name, ram, vcpus]):
+            return Response({"error": "flavor_name, ram, vcpus are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             flavor = conn.compute.create_flavor(
@@ -100,15 +100,15 @@ class DeleteFlavor(APIView):
         flavor_id = request.data.get('flavor_id')  # 삭제할 Flavor의 ID
 
         if not flavor_id:
-            return Response({"error": "Flavor ID를 확인해주세요."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Please check again the Flavor ID."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # Flavor 삭제
             flavor = conn.compute.get_flavor(flavor_id)
             if not flavor:
-                return Response({"error": "Flavor를 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "The specified flavor could not be found."}, status=status.HTTP_404_NOT_FOUND)
 
             conn.compute.delete_flavor(flavor_id)
-            return Response({"message": f"'{flavor_id}' Flavor가 삭제되었습니다."}, status=status.HTTP_200_OK)
+            return Response({"message": f"'{flavor_id}' Flavor deleted successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
