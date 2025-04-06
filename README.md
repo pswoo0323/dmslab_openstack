@@ -19,7 +19,7 @@ Konkuk University DMSLab Openstack Service Project
 - openstack 구축 - 봉정근, 이지수
 - Front-End, Design - 권순재
 - Back-End - 박상우
-- etc..조성수 대표님, 신호철님
+- etc..조성수대표님, 신호철이사님
 
 <br>
 
